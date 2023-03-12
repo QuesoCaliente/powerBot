@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Guild {
+  id          Int             @id @default(autoincrement())
+  discordId   String          @unique
+  nsfw        Int?
+  openaiToken String?
+  prefix      String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  users       UsersOnGuilds[]
+}
+
+model User {
+  id        Int             @id @default(autoincrement())
+  discordId String          @unique
+  guilds    UsersOnGuilds[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model UsersOnGuilds {
+  id              Int      @id @default(autoincrement())
+  guildId         Int
+  userId          Int
+  guild           Guild    @relation(fields: [guildId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  guildUserUnique String   @unique(map: "guildUserUniqueIndex")
+
+  @@unique([guildUserUnique], name: "guildUserUniqueIndex")
+  @@index([guildId])
+  @@index([userId])
+  @@index([guildId, userId], name: "guildUserIndex")
+}
